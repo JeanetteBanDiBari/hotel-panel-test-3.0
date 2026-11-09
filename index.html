@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>酒店客房中控 · 带自定义场景保存</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}
+:root{
+  --bg:#0b1220;
+  --panel:#111b2e;
+  --card:#172240;
+  --card-hover:#1c2b4d;
+  --card-border:#24345c;
+  --primary:#38bdf8;
+  --primary-2:#6366f1;
+  --on:#10b981;
+  --warning:#f59e0b;
+  --text:#f7f9fc;
+  --text-2:#cfd6e4;
+  --text-3:#8892a6;
+  --shadow:0 20px 50px rgba(0,0,0,.35);
+}
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(56,189,248,.18), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(99,102,241,.18), transparent 60%),
+    linear-gradient(180deg,#0b1220 0%,#071024 100%);
+  color:var(--text);
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:24px;
+}
+.app{
+  width:100%;
+  max-width:1180px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:28px;
+  padding:24px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
+}
+/* 顶部酒店栏 */
+.hotel-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  margin-bottom:18px;
+}
+.hotel-info{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.hotel-logo{
+  width:46px;height:46px;border-radius:14px;
+  background:conic-gradient(from 210deg,var(--primary),var(--primary-2),var(--primary));
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;
+  box-shadow:0 10px 24px rgba(56,189,248,.25);
+}
+.hotel-name{font-size:18px;font-weight:700;letter-spacing:.5px}
+.hotel-sub{font-size:12px;color:var(--text-3);margin-top:2px}
+.room-info{
+  text-align:right;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--card-border);
+  border-radius:14px;
+  padding:10px 14px;
+}
+.room-no{font-size:15px;font-weight:700}
+.room-status{font-size:12px;color:var(--text-3);margin-top:2px}
+/* 顶部：时间 + 天气 + 环境概览 */
+.top-row{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap:14px;
+  margin-bottom:18px;
+}
+.mini-card{
+  background:linear-gradient(180deg,rgba(56,189,248,.12),rgba(56,189,248,.04));
+  border:1px solid rgba(56,189,248,.25);
+  border-radius:18px;
+  padding:16px;
+  position:relative;
+  overflow:hidden;
+}
+.mini-card.time{
+  background:linear-gradient(180deg,rgba(99,102,241,.12),rgba(99,102,241,.04));
+  border-color:rgba(99,102,241,.25);
+}
+.mini-card.weather{
+  background:linear-gradient(180deg,rgba(245,158,11,.12),rgba(245,158,11,.04));
+  border-color:rgba(245,158,11,.25);
+}
+.mini-card.env{
+  background:linear-gradient(180deg,rgba(16,185,129,.12),rgba(16,185,129,.04));
+  border-color:rgba(16,185,129,.25);
+}
+.mini-label{font-size:12px;color:var(--text-3)}
+.mini-value{font-size:22px;font-weight:700;margin-top:6px}
+.mini-sub{font-size:12px;color:var(--text-2);margin-top:4px}
+.mini-icon{position:absolute;right:14px;top:14px;font-size:22px;opacity:.8}
+/* 场景模块 */
+.scene-wrap{
+  margin-bottom:22px;
+}
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  margin:0 4px 14px;
+}
+.section-title h2{font-size:18px;font-weight:700}
+.section-title p{font-size:13px;color:var(--text-3)}
+.scene-buttons{
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:12px;
+  margin-bottom:16px;
+}
+.scene-btn{
+  border:none;
+  border-radius:18px;
+  padding:16px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--card-border);
+  color:var(--text);
+  cursor:pointer;
+  transition:0.22s;
+  text-align:left;
+}
+.scene-btn:hover{
+  border-color:rgba(56,189,248,.45);
+  background:rgba(56,189,248,.08);
+  transform: translateY(-3px);
+}
+.scene-btn .scene-icon{font-size:24px;margin-bottom:8px}
+.scene-btn .scene-name{font-weight:700;font-size:15px}
+.scene-btn .scene-desc{font-size:12px;color:var(--text-3);margin-top:4px}
+/* 自定义场景区域 */
+.custom-scene-box{
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--card-border);
+  border-radius:18px;
+  padding:16px;
+}
+.scene-save-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-bottom:12px;
+}
+.scene-save-row input{
+  flex:1;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--card-border);
+  background:#172240;
+  color:#fff;
+  outline:none;
+}
+.scene-save-row button{
+  border:none;
+  border-radius:12px;
+  padding:10px 14px;
+  background:#38bdf8;
+  color:#0b1220;
+  font-weight:bold;
+  cursor:pointer;
+}
+.saved-scene-list{
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:10px;
+}
+.saved-scene-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#172240;
+  border:1px solid var(--card-border);
+  border-radius:14px;
+  padding:10px 12px;
+  gap:8px;
+}
+.saved-scene-item button.load{
+  border:none;
+  background:#38bdf8;
+  color:#000;
+  border-radius:8px;
+  padding:6px 8px;
+  cursor:pointer;
+}
+.saved-scene-item button.del{
+  border:none;
+  background:#444b58;
+  color:#fff;
+  border-radius:8px;
+  padding:6px 8px;
+  cursor:pointer;
+}
+/* 设备网格 */
+.device-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+.device-card{
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+  border:1px solid var(--card-border);
+  border-radius:22px;
+  padding:18px;
+  transition:.25s ease;
+  position:relative;
+  overflow:hidden;
+}
+.device-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(56,189,248,.45);
+  background:linear-gradient(180deg,rgba(56,189,248,.08),rgba(255,255,255,.02));
+}
+.device-card.active{
+  border-color:rgba(16,185,129,.55);
+  box-shadow:0 18px 40px rgba(16,185,129,.14);
+}
+.device-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:14px;
+}
+.device-icon{
+  width:44px;height:44px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--card-border);
+}
+.device-card.active .device-icon{
+  background:rgba(16,185,129,.15);
+  border-color:rgba(16,185,129,.45);
+}
+.device-name{font-size:15px;font-weight:700}
+.device-sub{font-size:12px;color:var(--text-3);margin-top:3px}
+/* 开关 */
+.switch{
+  width:44px;height:26px;border-radius:99px;
+  background:#2a3658;
+  position:relative;
+  cursor:pointer;
+  transition:.25s;
+  border:1px solid var(--card-border);
+}
+.switch::after{
+  content:"";
+  position:absolute;
+  top:3px;left:3px;
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;
+  transition:.25s;
+}
+.device-card.active .switch{
+  background:var(--on);
+  border-color:rgba(16,185,129,.6);
+}
+.device-card.active .switch::after{
+  left:22px;
+}
+/* 连续滑块 */
+.slider{
+  margin-top:14px;
+}
+.slider label{
+  display:flex;justify-content:space-between;
+  font-size:13px;color:var(--text-2);
+  margin-bottom:8px;
+}
+input[type="range"]{
+  width:100%;
+  accent-color:var(--primary);
+}
+/* 五档按钮 */
+.steps{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:6px;
+  margin-top:14px;
+}
+.steps button{
+  border:none;
+  border-radius:10px;
+  padding:8px 0;
+  font-size:13px;
+  background:rgba(255,255,255,.06);
+  color:var(--text-2);
+  cursor:pointer;
+  border:1px solid var(--card-border);
+  transition:.2s;
+}
+.steps button:hover{background:rgba(56,189,248,.15)}
+.steps button.active{
+  background:linear-gradient(180deg,var(--primary),var(--primary-2));
+  color:#fff;
+  border-color:rgba(56,189,248,.6);
+  box-shadow:0 10px 24px rgba(56,189,248,.25);
+}
+/* 底部提示 */
+.footer-tip{
+  margin-top:24px;
+  padding:14px 16px;
+  border-radius:16px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--card-border);
+  font-size:13px;color:var(--text-3);
+}
+.footer-tip strong{color:var(--text-2)}
+/* 响应式 */
+@media (max-width:900px){
+  .top-row{grid-template-columns:repeat(2,1fr)}
+  .scene-buttons{grid-template-columns:repeat(2,1fr)}
+  .saved-scene-list{grid-template-columns:repeat(2,1fr)}
+  .device-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:520px){
+  body{padding:14px}
+  .app{padding:16px;border-radius:22px}
+  .top-row{grid-template-columns:1fr}
+  .scene-buttons{grid-template-columns:1fr}
+  .saved-scene-list{grid-template-columns:1fr}
+  .device-grid{grid-template-columns:1fr}
+  .hotel-bar{flex-direction:column;align-items:flex-start}
+  .room-info{text-align:left;margin-top:12px}
+  .scene-save-row{flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 顶部酒店信息 -->
+  <div class="hotel-bar">
+    <div class="hotel-info">
+      <div class="hotel-logo">🏨</div>
+      <div>
+        <div class="hotel-name">云顶酒店 · 客房中控</div>
+        <div class="hotel-sub">Hotel Room Control</div>
+      </div>
+    </div>
+    <div class="room-info">
+      <div class="room-no">客房 1808</div>
+      <div class="room-status">已入住 · GitHub Pages模拟面板</div>
+    </div>
+  </div>
+  <!-- 顶部：时间｜天气｜室内温湿度｜运行设备 -->
+  <div class="top-row">
+    <div class="mini-card time">
+      <div class="mini-icon">🕒</div>
+      <div class="mini-label">当前时间</div>
+      <div class="mini-value" id="clock">00:00:00</div>
+      <div class="mini-sub" id="dateText"></div>
+    </div>
+    <div class="mini-card weather">
+      <div class="mini-icon" id="weatherIcon">⛅</div>
+      <div class="mini-label">室外天气（模拟）</div>
+      <div class="mini-value" id="weatherTemp">26℃</div>
+      <div class="mini-sub" id="weatherDesc">多云，微风</div>
+    </div>
+    <div class="mini-card env">
+      <div class="mini-icon">🌡️</div>
+      <div class="mini-label">室内环境</div>
+      <div class="mini-value" id="roomEnv">24℃ / 58%</div>
+      <div class="mini-sub">舒适区间</div>
+    </div>
+    <div class="mini-card">
+      <div class="mini-icon">🔌</div>
+      <div class="mini-label">运行设备</div>
+      <div class="mini-value" id="deviceRun">0</div>
+      <div class="mini-sub">个设备已开启</div>
+    </div>
+  </div>
+  <!-- 场景模式区 -->
+  <div class="scene-wrap">
+    <div class="section-title">
+      <h2>快捷场景</h2>
+      <p>一键切换整套客房设备状态 / 保存自定义场景（浏览器本地存储）</p>
+    </div>
+    <div class="scene-buttons">
+      <button class="scene-btn" onclick="applyScene('checkin')">
+        <div class="scene-icon">🛎️</div>
+        <div class="scene-name">入住模式</div>
+        <div class="scene-desc">主灯75%、氛围灯25%、窗帘半开</div>
+      </button>
+      <button class="scene-btn" onclick="applyScene('read')">
+        <div class="scene-icon">📖</div>
+        <div class="scene-name">阅读模式</div>
+        <div class="scene-desc">主灯全开，其余灯光调低</div>
+      </button>
+      <button class="scene-btn" onclick="applyScene('sleep')">
+        <div class="scene-icon">🌙</div>
+        <div class="scene-name">睡眠模式</div>
+        <div class="scene-desc">主灯关闭，氛围微光，勿扰开启</div>
+      </button>
+      <button class="scene-btn" onclick="applyScene('away')">
+        <div class="scene-icon">🚪</div>
+        <div class="scene-name">离家模式</div>
+        <div class="scene-desc">全部设备关闭、窗帘全关</div>
+      </button>
+    </div>
+    <div class="custom-scene-box">
+      <div class="scene-save-row">
+        <input id="customSceneName" placeholder="输入自定义场景名字，例如：午休、观影">
+        <button onclick="saveCurrentToCustom()">保存当前状态为场景</button>
+      </div>
+      <div class="saved-scene-list" id="customSceneList"></div>
+    </div>
+  </div>
+  <!-- 设备控制区 -->
+  <div class="section-title">
+    <h2>客房设备控制</h2>
+    <p>模拟控制面板，状态保存在浏览器本地，暂不控制真实硬件</p>
+  </div>
+  <div class="device-grid">
+    <!-- 主灯：五档 -->
+    <div class="device-card" id="light-main">
+      <div class="device-head">
+        <div>
+          <div class="device-name">主灯</div>
+          <div class="device-sub">固定五档亮度</div>
+        </div>
+        <div class="device-icon">💡</div>
+      </div>
+      <div class="device-head" style="margin-top:10px">
+        <div class="device-sub" id="light-main-state">关闭</div>
+        <div class="switch" onclick="toggleDevice('light-main')"></div>
+      </div>
+      <div class="steps" id="light-main-steps">
+        <button onclick="setStep('light-main',0)">0%</button>
+        <button onclick="setStep('light-main',25)">25%</button>
+        <button onclick="setStep('light-main',50)">50%</button>
+        <button onclick="setStep('light-main',75)">75%</button>
+        <button onclick="setStep('light-main',100)">100%</button>
+      </div>
+    </div>
+    <!-- 氛围灯：五档 -->
+    <div class="device-card" id="light-ambient">
+      <div class="device-head">
+        <div>
+          <div class="device-name">氛围灯</div>
+          <div class="device-sub">固定五档亮度</div>
+        </div>
+        <div class="device-icon">✨</div>
+      </div>
+      <div class="device-head" style="margin-top:10px">
+        <div class="device-sub" id="light-ambient-state">关闭</div>
+        <div class="switch" onclick="toggleDevice('light-ambient')"></div>
+      </div>
+      <div class="steps" id="light-ambient-steps">
+        <button onclick="setStep('light-ambient',0)">0%</button>
+        <button onclick="setStep('light-ambient',25)">25%</button>
+        <button onclick="setStep('light-ambient',50)">50%</button>
+        <button onclick="setStep('light-ambient',75)">75%</button>
+        <button onclick="setStep('light-ambient',100)">100%</button>
+      </div>
+    </div>
+    <!-- 灯带：五档 -->
+    <div class="device-card" id="light-strip">
+      <div class="device-head">
+        <div>
+          <div class="device-name">灯带</div>
+          <div class="device-sub">固定五档亮度</div>
+        </div>
+        <div class="device-icon">🌈</div>
+      </div>
+      <div class="device-head" style="margin-top:10px">
+        <div class="device-sub" id="light-strip-state">关闭</div>
+        <div class="switch" onclick="toggleDevice('light-strip')"></div>
+      </div>
+      <div class="steps" id="light-strip-steps">
+        <button onclick="setStep('light-strip',0)">0%</button>
+        <button onclick="setStep('light-strip',25)">25%</button>
+        <button onclick="setStep('light-strip',50)">50%</button>
+        <button onclick="setStep('light-strip',75)">75%</button>
+        <button onclick="setStep('light-strip',100)">100%</button>
+      </div>
+    </div>
+    <!-- 窗帘：滑块 -->
+    <div class="device-card" id="curtain">
+      <div class="device-head">
+        <div>
+          <div class="device-name">窗帘</div>
+          <div class="device-sub">连续开合控制</div>
+        </div>
+        <div class="device-icon">🪟</div>
+      </div>
+      <div class="device-head" style="margin-top:10px">
+        <div class="device-sub" id="curtain-state">关闭</div>
+        <div class="switch" onclick="toggleDevice('curtain')"></div>
+      </div>
+      <div class="slider">
+        <label>开合度 <span id="curtain-val">0%</span></label>
+        <input type="range" min="0" max="100" value="0" id="curtain-slider" oninput="setSlider('curtain',this.value)">
+      </div>
+    </div>
+    <!-- ✅ 空调：改成滑动条，16~30℃，步长0.5 -->
+    <div class="device-card" id="aircon">
+      <div class="device-head">
+        <div>
+          <div class="device-name">空调</div>
+          <div class="device-sub">连续温度调节 16~30℃</div>
+        </div>
+        <div class="device-icon">❄️</div>
+      </div>
+      <div class="device-head" style="margin-top:10px">
+        <div class="device-sub" id="aircon-state">关闭</div>
+        <div class="switch" onclick="toggleDevice('aircon')"></div>
+      </div>
+      <div class="slider">
+        <label>设定温度 <span id="aircon-val">24.0℃</span></label>
+        <input type="range" min="16" max="30" step="0.5" value="24" id="aircon-slider" oninput="setAirconTemp(this.value)">
+      </div>
+    </div>
+    <!-- 风扇：滑块 -->
+    <div class="device-card" id="fan">
+      <div class="device-head">
+        <div>
+          <div class="device-name">风扇</div>
+          <div class="device-sub">连续风速调节</div>
+        </div>
+        <div class="device-icon">🌀</div>
+      </div>
+      <div class="device-head" style="margin-top:10px">
+        <div class="device-sub" id="fan-state">关闭</div>
+        <div class="switch" onclick="toggleDevice('fan')"></div>
+      </div>
+      <div class="slider">
+        <label>风速 <span id="fan-val">0%</span></label>
+        <input type="range" min="0" max="100" value="0" id="fan-slider" oninput="setSlider('fan',this.value)">
+      </div>
+    </div>
+    <!-- 除湿机：滑块 -->
+    <div class="device-card" id="dehumidifier">
+      <div class="device-head">
+        <div>
+          <div class="device-name">除湿机</div>
+          <div class="device-sub">连续强度调节</div>
+        </div>
+        <div class="device-icon">💧</div>
+      </div>
+      <div class="device-head" style="margin-top:10px">
+        <div class="device-sub" id="dehumidifier-state">关闭</div>
+        <div class="switch" onclick="toggleDevice('dehumidifier')"></div>
+      </div>
+      <div class="slider">
+        <label>除湿强度 <span id="dehumidifier-val">50%</span></label>
+        <input type="range" min="0" max="100" value="50" id="dehumidifier-slider" oninput="setSlider('dehumidifier',this.value)">
+      </div>
+    </div>
+    <!-- 请勿打扰：纯开关 -->
+    <div class="device-card" id="do-not-disturb">
+      <div class="device-head">
+        <div>
+          <div class="device-name">请勿打扰</div>
+          <div class="device-sub">仅开关控制</div>
+        </div>
+        <div class="device-icon">🔕</div>
+      </div>
+      <div class="device-head" style="margin-top:10px">
+        <div class="device-sub" id="do-not-disturb-state">关闭</div>
+        <div class="switch" onclick="toggleDevice('do-not-disturb')"></div>
+      </div>
+      <div style="margin-top:14px;font-size:13px;color:var(--text-3)">
+        开启后暂停客房上门服务
+      </div>
+    </div>
+  </div>
+  <div class="footer-tip">
+    <strong>GitHub Pages版本说明：</strong>纯前端模拟面板；自定义场景保存在浏览器本地localStorage，清除浏览器数据会丢失；后续可以对接Home Assistant实现真实硬件控制。
+  </div>
+</div>
+<script>
+const devices = {
+  "light-main":       { on:false, type:"step",   value:0 },
+  "light-ambient":    { on:false, type:"step",   value:0 },
+  "light-strip":      { on:false, type:"step",   value:0 },
+  "curtain":          { on:false, type:"slider", value:0 },
+  "aircon":           { on:false, type:"temp",   value:24 },
+  "fan":              { on:false, type:"slider", value:0 },
+  "dehumidifier":     { on:false, type:"slider", value:50 },
+  "do-not-disturb":   { on:false, type:"switch", value:0 }
+};
+// 内置固定场景
+const scenes = {
+  checkin: {
+    "light-main": {on:true, value:75},
+    "light-ambient": {on:true, value:25},
+    "light-strip": {on:false, value:0},
+    "curtain": {on:true, value:50},
+    "aircon": {on:true, value:24},
+    "fan": {on:false, value:0},
+    "dehumidifier": {on:false, value:50},
+    "do-not-disturb": {on:false}
+  },
+  read: {
+    "light-main": {on:true, value:100},
+    "light-ambient": {on:true, value:25},
+    "light-strip": {on:false, value:0},
+    "curtain": {on:true, value:30},
+    "aircon": {on:true, value:24},
+    "fan": {on:false, value:0},
+    "dehumidifier": {on:false, value:50},
+    "do-not-disturb": {on:false}
+  },
+  sleep: {
+    "light-main": {on:false, value:0},
+    "light-ambient": {on:true, value:25},
+    "light-strip": {on:false, value:0},
+    "curtain": {on:true, value:0},
+    "aircon": {on:true, value:26},
+    "fan": {on:false, value:0},
+    "dehumidifier": {on:false, value:50},
+    "do-not-disturb": {on:true}
+  },
+  away: {
+    "light-main": {on:false, value:0},
+    "light-ambient": {on:false, value:0},
+    "light-strip": {on:false, value:0},
+    "curtain": {on:false, value:0},
+    "aircon": {on:false, value:24},
+    "fan": {on:false, value:0},
+    "dehumidifier": {on:false, value:50},
+    "do-not-disturb": {on:false}
+  }
+};
+// 自定义场景本地存储
+function loadCustomScenes(){
+  const raw = localStorage.getItem("hotel_scenes");
+  return raw ? JSON.parse(raw) : [];
+}
+function saveCustomScenes(arr){
+  localStorage.setItem("hotel_scenes", JSON.stringify(arr));
+}
+function renderCustomSceneList(){
+  const list = loadCustomScenes();
+  const wrap = document.getElementById("customSceneList");
+  wrap.innerHTML = "";
+  list.forEach((item, idx)=>{
+    const div = document.createElement("div");
+    div.className = "saved-scene-item";
+    div.innerHTML = `
+      <span>${item.name}</span>
+      <div style="display:flex;gap:6px">
+        <button class="load">加载</button>
+        <button class="del">删</button>
+      </div>
+    `;
+    div.querySelector(".load").onclick = ()=> applyCustomScene(item.state);
+    div.querySelector(".del").onclick = ()=>{
+      const arr = loadCustomScenes();
+      arr.splice(idx,1);
+      saveCustomScenes(arr);
+      renderCustomSceneList();
+    };
+    wrap.appendChild(div);
+  })
+}
+function saveCurrentToCustom(){
+  const name = document.getElementById("customSceneName").value.trim();
+  if(!name) return alert("请输入场景名称");
+  const snapshot = JSON.parse(JSON.stringify(devices));
+  const arr = loadCustomScenes();
+  arr.push({name, state:snapshot});
+  saveCustomScenes(arr);
+  document.getElementById("customSceneName").value = "";
+  renderCustomSceneList();
+}
+function applyCustomScene(snapshot){
+  Object.assign(devices, JSON.parse(JSON.stringify(snapshot)));
+  renderAll();
+}
+function applyScene(name){
+  const s = scenes[name];
+  Object.keys(s).forEach(id=>{
+    devices[id].on = s[id].on;
+    if(s[id].value !== undefined) devices[id].value = s[id].value;
+  })
+  renderAll();
+}
+// 时钟
+function updateClock(){
+  const now = new Date();
+  document.getElementById("clock").textContent = now.toLocaleTimeString("zh-CN");
+  document.getElementById("dateText").textContent = now.toLocaleDateString("zh-CN",{weekday:"long",month:"long",day:"numeric"});
+}
+setInterval(updateClock,1000);
+updateClock();
+// 基础控制
+function toggleDevice(id){
+  devices[id].on = !devices[id].on;
+  if(!devices[id].on && devices[id].type!=="switch"){
+    devices[id].value = 0;
+  }
+  renderAll();
+}
+function setStep(id, val){
+  devices[id].value = val;
+  devices[id].on = val > 0;
+  renderAll();
+}
+function setSlider(id, val){
+  val = Number(val);
+  devices[id].value = val;
+  devices[id].on = val > 0;
+  renderAll();
+}
+function setAirconTemp(val){
+  val = Number(val);
+  devices["aircon"].value = val;
+  devices["aircon"].on = true;
+  renderAll();
+}
+function renderAll(){
+  Object.keys(devices).forEach(id=>{
+    const card = document.getElementById(id);
+    const d = devices[id];
+    if(!card) return;
+    card.classList.toggle("active", d.on);
+    const stateEl = document.getElementById(id + "-state");
+    if(stateEl){
+      if(id === "aircon"){
+        stateEl.textContent = d.on ? `已开启 · ${d.value}℃` : "关闭";
+      }else if(id === "do-not-disturb"){
+        stateEl.textContent = d.on ? "已开启" : "关闭";
+      }else if(d.type === "slider"){
+        stateEl.textContent = d.on ? `运行中 · ${d.value}%` : "关闭";
+      }else{
+        stateEl.textContent = d.on ? `已开启 · ${d.value}%` : "关闭";
+      }
+    }
+    const valEl = document.getElementById(id + "-val");
+    if(valEl){
+      if(id === "aircon") valEl.textContent = d.value.toFixed(1)+"℃";
+      else valEl.textContent = d.value + "%";
+    }
+    const slider = document.getElementById(id + "-slider");
+    if(slider) slider.value = d.value;
+    const stepWrap = document.getElementById(id + "-steps");
+    if(stepWrap){
+      stepWrap.querySelectorAll("button").forEach(b=>{
+        b.classList.toggle("active", Number(b.textContent) === d.value);
+      });
+    }
+  });
+  const runCount = Object.values(devices).filter(d=>d.on).length;
+  document.getElementById("deviceRun").textContent = runCount;
+}
+renderAll();
+renderCustomSceneList();
+</script>
+</body>
+</html>
